@@ -43,8 +43,8 @@ def get_user_indices(dataset_name, dataset_train, dataset_test, dataset_size, nu
         test_sample_size = round(train_sample_size / 5)
 
         # calculate train sample sizes for all classes
-        user_train_label_size_list = [train_sample_size / data_classes for _ in range(data_classes)]
-        user_test_label_size_list = [test_sample_size / data_classes for _ in range(data_classes)]
+        user_train_label_size_list = [round(train_sample_size / data_classes)] * data_classes
+        user_test_label_size_list = [round(test_sample_size / data_classes)] * data_classes
 
         train_indices = get_indices(train_labels, user_labels, user_train_label_size_list)
         test_indices = get_indices(test_labels, user_labels, user_test_label_size_list)

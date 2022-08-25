@@ -3,6 +3,7 @@ import os
 import torch
 
 import numpy as np
+from torch import Tensor
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
@@ -50,7 +51,8 @@ class LocalDataset:
         real_path = os.path.dirname(os.path.realpath(__file__))
         # load dataset and split users
         if dataset_name == 'kdd99':
-            kddcup99 = datasets.fetch_kddcup99(data_home="../../data/kdd99/")
+            data_path = os.path.join(real_path, "../../data/kdd99/")
+            kddcup99 = datasets.fetch_kddcup99(data_home=data_path)
             self._encoder = {
                 'protocal': LabelEncoder(),
                 'service': LabelEncoder(),
@@ -58,7 +60,7 @@ class LocalDataset:
                 'label': LabelEncoder()
             }
             data_X, data_y = self.encode_data(kddcup99.data, kddcup99.target)
-            dataset_train, dataset_test = self.split_data_to_tensor(data_X, data_y)
+            dataset_train, dataset_test = self.split_datasets(data_X, data_y)
 
         dict_users, test_users = get_user_indices(dataset_name, dataset_train, dataset_test, dataset_size, num_users)
 
@@ -68,6 +70,7 @@ class LocalDataset:
         self.image_shape = dataset_train[0][0].shape
         self.dict_users = dict_users
         self.test_users = test_users
+        self.dis_acc_test = dis_acc_test
         self.initialized = True
 
     def load_train_dataset(self, idx, local_bs):
@@ -75,17 +78,20 @@ class LocalDataset:
         return DataLoader(split_ds, batch_size=local_bs, shuffle=True)
 
     def load_test_dataset(self, idxs, local_test_bs):
-        split_ds = DatasetSplit(self.dataset_test, idxs)
-        return DataLoader(split_ds, batch_size=local_test_bs)
+        if self.dis_acc_test:
+            split_ds = DatasetSplit(self.dataset_test, idxs)
+            return DataLoader(split_ds, batch_size=local_test_bs)
+        else:
+            return DataLoader(self.dataset_test, batch_size=local_test_bs)
 
     """将数据拆分为训练集和测试集，并转换为TensorDataset对象"""
-    def split_data_to_tensor(self, data_X, data_y):
+    def split_datasets(self, data_X, data_y):
         X_train, X_test, y_train, y_test = train_test_split(data_X, data_y, test_size=0.3)
-        train_dataset = TensorDataset(
+        train_dataset = TorchDataset(
             torch.from_numpy(X_train.astype(np.float32)),
             torch.from_numpy(y_train.astype(np.int))
         )
-        test_dataset = TensorDataset(
+        test_dataset = TorchDataset(
             torch.from_numpy(X_test.astype(np.float32)),
             torch.from_numpy(y_test.astype(np.int))
         )
@@ -103,3 +109,9 @@ class LocalDataset:
         data_X = np.pad(data_X, ((0, 0), (0, 64 - len(data_X[0]))), 'constant').reshape(-1, 1, 8, 8)
         data_y = self._encoder['label'].transform(data_y)
         return data_X, data_y
+
+
+class TorchDataset(TensorDataset):
+    def __init__(self, *tensors: Tensor):
+        super().__init__(*tensors)
+        self.targets = [item[1] for item in self]

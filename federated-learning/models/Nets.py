@@ -3,7 +3,7 @@ from torch import nn
 
 class CNNKDD(nn.Module):
     # https://github.com/Bingmang/kddcup99-cnn/blob/master/kdd-pytorch.ipynb
-    def __init__(self, in_dim, n_class):
+    def __init__(self, in_dim=1, n_class=23):
         super(CNNKDD, self).__init__()
 
         self.conv = nn.Sequential(

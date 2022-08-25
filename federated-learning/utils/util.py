@@ -13,7 +13,7 @@ import numpy as np
 import requests
 import torch
 
-from models.Nets import CNNCifar, CNNMnist, MLP, CNNFashion
+from models.Nets import CNNKDD
 from models.Test import test_img
 from models.Train import train_cnn_mlp
 
@@ -82,19 +82,8 @@ logger = logging.getLogger(__file__)
 def model_loader(model_name, dataset_name, device, img_size):
     net_glob = None
     # build model, init part
-    if model_name == 'cnn' and dataset_name == 'mnist':
-        net_glob = CNNMnist().to(device)
-    elif model_name == 'cnn' and dataset_name == 'cifar10':
-        net_glob = CNNCifar().to(device)
-    elif model_name == 'cnn' and dataset_name == 'cifar100':
-        net_glob = CNNCifar(num_classes=100).to(device)
-    elif model_name == 'cnn' and dataset_name == 'fmnist':
-        net_glob = CNNFashion().to(device)
-    elif model_name == 'mlp':
-        len_in = 1
-        for x in img_size:
-            len_in *= x
-        net_glob = MLP(dim_in=len_in).to(device)
+    if model_name == 'cnn' and dataset_name == 'kdd99':
+        net_glob = CNNKDD().to(device)
     return net_glob
 
 
