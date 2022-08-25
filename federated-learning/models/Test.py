@@ -1,25 +1,26 @@
 import torch
-import torch.nn.functional as F
+from torch import nn
 
 
 def test_img(net_g, my_dataset, test_indices, local_test_bs, device):
     net_g.eval()
     # testing
-    test_loss = 0
-    correct = 0
     data_loader = my_dataset.load_test_dataset(test_indices, local_test_bs)
-    for idx, (data, target) in enumerate(data_loader):
+    loss_func = nn.CrossEntropyLoss()
+
+    eval_acc = 0
+    eval_loss = 0
+    for idx, (data, label) in enumerate(data_loader):
         data = data.detach().clone().type(torch.FloatTensor)
         if device != torch.device('cpu'):
-            data, target = data.to(device), target.to(device)
+            data, label = data.to(device), label.to(device)
         log_probs = net_g(data)
-        # sum up batch loss
-        test_loss += F.cross_entropy(log_probs, target, reduction='sum')
+        loss = loss_func(log_probs, label)
+        eval_loss += loss.item() * label.size(0)
         # get the index of the max log-probability
-        y_pred = log_probs.data.max(1, keepdim=True)[1]
-        correct += y_pred.eq(target.data.view_as(y_pred)).long().cpu().sum()
+        y_pred = torch.max(log_probs, 1)[1]
+        eval_acc += y_pred.eq(label.data.view_as(y_pred)).long().cpu().sum().item()
 
-    test_loss /= len(data_loader.dataset)
-    accuracy = 100.00 * correct / len(data_loader.dataset)
-    return accuracy, test_loss
-
+    test_loss = eval_loss / len(data_loader.dataset)
+    test_acc = 100.00 * eval_acc / len(data_loader.dataset)
+    return test_acc, test_loss

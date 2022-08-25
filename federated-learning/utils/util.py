@@ -90,9 +90,7 @@ def model_loader(model_name, dataset_name, device, img_size):
 def test_model(net_glob, my_dataset, idx, local_test_bs, device):
     idx_total = my_dataset.test_users[idx]
     accuracy, loss = test_img(net_glob, my_dataset, idx_total, local_test_bs, device)
-    acc_value = accuracy.item()
-    loss_value = loss.item()
-    return acc_value, loss_value
+    return accuracy, loss
 
 
 def train_model(net_glob, my_dataset, idx, local_ep, device, lr, momentum, local_bs):
