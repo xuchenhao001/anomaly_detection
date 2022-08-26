@@ -13,7 +13,7 @@ import numpy as np
 import requests
 import torch
 
-from models.Nets import CNNKDD
+from models.Nets import CNNKDD, MLPKDD
 from models.Test import test_img
 from models.Train import train_cnn_mlp
 
@@ -82,8 +82,13 @@ logger = logging.getLogger(__file__)
 def model_loader(model_name, dataset_name, device, img_size):
     net_glob = None
     # build model, init part
-    if model_name == 'cnn' and dataset_name == 'kdd99':
+    if model_name == "cnn" and dataset_name == "kdd99":
         net_glob = CNNKDD().to(device)
+    elif model_name == "mlp" and dataset_name == "kdd99":
+        len_in = 1
+        for x in img_size:
+            len_in *= x
+        net_glob = MLPKDD(dim_in=len_in).to(device)
     return net_glob
 
 
